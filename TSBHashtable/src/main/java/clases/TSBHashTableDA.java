@@ -49,10 +49,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     
     // el tamaño máximo que podrá tener el arreglo de soporte...
     private final static int MAX_SIZE = Integer.MAX_VALUE;
-    // la idea del Integer.MAX_VALUE es que yo pueda reemplazarlo por algun otro valor que me permita limitar
+    // la idea del Integer.MAX_VALUE es que yo pueda reemplazarlo por algún otro valor que me permita limitar
     // el tamaño maximo de la tabla. Ej: 25000, entonces cualquier valor por encima de ese maximo lo limito a 25000
     // cuando me pasen el valor de initial_capacity en el constructor.
-
 
 
 
