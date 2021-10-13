@@ -48,10 +48,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     //************************ Constantes (privadas o públicas).    
     
     // el tamaño máximo que podrá tener el arreglo de soporte...
-    private final static int MAX_SIZE = Integer.MAX_VALUE;
-    // la idea del Integer.MAX_VALUE es que yo pueda reemplazarlo por algún otro valor que me permita limitar
-    // el tamaño maximo de la tabla. Ej: 25000, entonces cualquier valor por encima de ese maximo lo limito a 25000
-    // cuando me pasen el valor de initial_capacity en el constructor.
+    private final static int MAX_SIZE = Integer.MAX_VALUE; // el MAX_VALUE de Integer también es primo.
+
 
 
 
@@ -126,15 +124,17 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     public TSBHashTableDA(int initial_capacity, float load_factor)
     {
         if(load_factor <= 0) { load_factor = 0.5f; }
-        if(initial_capacity <= 0) { initial_capacity = 11; }
-        else
+        if(initial_capacity <= 2) { initial_capacity = 11; }
+        else if (!esPrimo(initial_capacity))
         {
-            if(initial_capacity > TSBHashTableDA.MAX_SIZE)
+            initial_capacity = siguientePrimo(initial_capacity);
+        }
+        if(initial_capacity > TSBHashTableDA.MAX_SIZE)
             {
                 initial_capacity = TSBHashTableDA.MAX_SIZE;
             }
-        }
-        
+
+
         this.table = (Nodo[]) new Object[initial_capacity];
         
         this.initial_capacity = initial_capacity;
@@ -223,8 +223,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     {
        if(key == null) throw new NullPointerException("get(): parámetro null");
 
-       Nodo x = this.search_for_nodo((K)key);
-       return (x != null)? x.getValue() : null;
+       int index = this.search_for_node_index((K)key);
+       Nodo nodo = table[index];
+       return (nodo != null && !nodo.getTumba()) ? nodo.getValue() : null; // se evalua que sea un nodo real y no una tumba.
     }
 
     /**
@@ -244,24 +245,25 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     {
         if(key == null || value == null) throw new NullPointerException("put(): parámetro null");
 
-        //if(count >= this.load_factor * initial_capacity) this.rehash();
+        if(count >= this.load_factor * table.length) this.rehash();
 
+        int index;
         V old = null;
-        Nodo x = this.search_for_nodo(key);
-        if(x != null)
+        index = this.search_for_node_index(key);
+        Nodo nodo = table[index];
+        if(nodo != null) // es de tipo Nodo
         {
-            if (!x.getTumba())
+            if (!nodo.getTumba()) // si es nodo, no es tumba
            {
-               old = x.getValue();
+               old = nodo.getValue();
            }
-           x.setValue(value);
-           x.setTumba(false);
+           nodo.setValue(value);
+           nodo.setTumba(false);
         }
-        else
+        else // no es nodo
         {
-            int index = this.search_for_entry(key);
             Entry<K, V> entry = new Entry<>(key, value);
-            Nodo nodo = new Nodo(entry, false);
+            nodo = new Nodo(entry, false);
             table[index] = nodo;
             this.count++;
             this.modCount++; // aca se hace modCount++ por si no se hizo rehash, para mostrar que se modificó la tabla
@@ -283,16 +285,16 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     {
        if(key == null) throw new NullPointerException("remove(): parámetro null");
 
-       int ik = this.search_for_index((K)key);
+       int index = this.search_for_node_index((K)key);
        V old = null;
-       if(ik != -1)
+       Nodo nodo = table[index];
+       if(nodo != null && !nodo.getTumba())
        {
-           old = table[ik].getValue();
-           table[ik].setTumba(true);
+           old = table[index].getValue();
+           table[index].setTumba(true);
            this.count--;
            this.modCount++;
        }
-       
        return old;        
     }
 
@@ -431,21 +433,21 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      * @throws java.lang.CloneNotSupportedException si la clase no implementa la
      *         interface Cloneable.    
      */ 
-//    @Override
-//    protected Object clone() throws CloneNotSupportedException
-//    {
-//        TSBHashTableDA<K, V> t = (TSBHashTableDA<K, V>)super.clone();
-//        t.table = new TSBArrayList[table.length];
-//        for (int i = table.length ; i-- > 0 ; )
-//        {
-//            t.table[i] = (TSBArrayList<Map.Entry<K, V>>) table[i].clone();
-//        }
-//        t.keySet = null;
-//        t.entrySet = null;
-//        t.values = null;
-//        t.modCount = 0;
-//        return t;
-//    }
+    @Override
+    protected Object clone() throws CloneNotSupportedException
+    {
+        TSBHashTableDA<K, V> t = (TSBHashTableDA<K, V>)super.clone();
+        t.table = (Nodo[]) new Object[this.table.length];
+        for (int i = table.length ; i-- > 0 ; )
+        {
+            t.table[i] = (TSBArrayList<Map.Entry<K, V>>) table[i].clone();
+        }
+        t.keySet = null;
+        t.entrySet = null;
+        t.values = null;
+        t.modCount = 0;
+        return t;
+    }
 
     /**
      * Determina si esta tabla es igual al objeto espeficicado.
@@ -505,15 +507,12 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     {
         StringBuilder cad = new StringBuilder("{");
         for (Nodo nodo : this.table) {
-            cad.append("[").append(nodo.toString()).append("], ");
+            cad.append(nodo.toString()).append(", ");
         }
         cad.setLength(cad.length()-1);
         cad.append("}");
         return cad.toString();
     }
-
-
-
 
 
     //************************ Métodos específicos de la clase.
@@ -524,74 +523,58 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      * @param value el objeto a buscar en la tabla.
      * @return true si alguna clave está asociada efectivamente a ese value.
      */
-//    public boolean contains(Object value)
-//    {
-//        if(value == null) return false;
-//
-//        for(TSBArrayList<Map.Entry<K, V>> bucket : this.table)
-//        {
-//            Iterator<Map.Entry<K, V>> it = bucket.iterator();
-//            while(it.hasNext())
-//            {
-//                Map.Entry<K, V> entry = it.next();
-//                if(value.equals(entry.getValue())) return true;
-//            }
-//        }
-//        return false;
-//    }
+    public boolean contains(Object value)
+    {
+        if(value == null) return false;
+
+        for(Nodo nodo : this.table)
+        {
+            if(value.equals(nodo.getValue())) return true;
+        }
+        return false;
+    }
     
     /**
      * Incrementa el tamaño de la tabla y reorganiza su contenido. Se invoca 
-     * automaticamente cuando se detecta que la cantidad promedio de nodos por 
-     * lista supera a cierto el valor critico dado por (10 * load_factor). Si el
-     * valor de load_factor es 0.8, esto implica que el límite antes de invocar 
-     * rehash es de 8 nodos por lista en promedio, aunque seria aceptable hasta 
-     * unos 10 nodos por lista.
+     * automaticamente cuando se detecta que la cantidad de nodos
+     * supera a cierto  valor critico dado por (load_factor * table.length). Si el
+     * valor de load_factor es 0.5, esto implica que el límite antes de invocar
+     * rehash es del 50% de el tamaño de la tabla.
      */
-//    protected void rehash()
-//    {
-//        int old_length = this.table.length;
-//
-//        // nuevo tamaño: doble del anterior, más uno para llevarlo a impar...
-//        int new_length = old_length * 2 + 1;
-//
-//        // no permitir que la tabla tenga un tamaño mayor al límite máximo...
-//        // ... para evitar overflow y/o desborde de índices...
-//        if(new_length > TSBHashTableDA.MAX_SIZE)
-//        {
-//            new_length = TSBHashTableDA.MAX_SIZE;
-//        }
-//
-//        // crear el nuevo arreglo con new_length listas vacías...
-//        TSBArrayList<Map.Entry<K, V>> []temp = new TSBArrayList[new_length]; // temp[] es la nueva table[]
-//        for(int j = 0; j < temp.length; j++) { temp[j] = new TSBArrayList<>(); }
-//
-//        // notificación fail-fast iterator... la tabla cambió su estructura...
-//        this.modCount++;  // la idea del incremento del modCount es mostrar que varió su valor, no tanto cuánto vale.
-//                          // aca se hace modCount++ para avisar que hubo rehash...
-//
-//        // recorrer el viejo arreglo y redistribuir los objetos que tenia...
-//        for(int i = 0; i < this.table.length; i++)
-//        {
-//           // entrar en la lista numero i, y recorrerla con su iterador...
-//           Iterator<Map.Entry<K, V>> it = this.table[i].iterator();
-//           while(it.hasNext())
-//           {
-//               // obtener un objeto Entry de la vieja lista...
-//               Map.Entry<K, V> x = it.next();
-//
-//               // obtener su nuevo valor de dispersión para el nuevo arreglo...
-//               K key = x.getKey();
-//               int y = this.h(key, temp.length);
-//
-//               // insertarlo en el nuevo arreglo, en la lista numero "y"...
-//               temp[y].add(x);
-//           }
-//        }
-//
-//        // cambiar la referencia table para que apunte a temp...
-//        this.table = temp;
-//    }
+    protected void rehash()
+    {
+        int old_length = this.table.length;
+
+        // nuevo tamaño: el siguiente número primo del doble del anterior.
+        int new_length = siguientePrimo(old_length * 2);
+
+        // no permitir que la tabla tenga un tamaño mayor al límite máximo...
+        // ... para evitar overflow y/o desborde de índices...
+        if(new_length > TSBHashTableDA.MAX_SIZE)
+        {
+            new_length = TSBHashTableDA.MAX_SIZE;
+        }
+
+        // crear el nuevo arreglo con new_length listas vacías...
+        Nodo []temp = (Nodo[]) new Object[new_length]; // temp[] es la nueva table[]
+
+        // notificación fail-fast iterator... la tabla cambió su estructura...
+        this.modCount++;  // la idea del incremento del modCount es mostrar que varió su valor, no tanto cuánto vale.
+                          // aca se hace modCount++ para avisar que hubo rehash...
+
+        // recorrer el viejo arreglo y redistribuir los objetos que tenia...
+        for(int i = 0; i < this.table.length; i++)
+        {
+            Nodo nodo = table[i];
+            if (!nodo.getTumba()) // si no es una tumba, llama al put() para agregarlo a la nueva tabla
+            {
+                put(nodo.getKey(), nodo.getValue());
+            }
+        }
+
+        // cambiar la referencia table para que apunte a temp...
+        this.table = temp;
+    }
     
 
 
@@ -644,7 +627,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      * Si lo encuentra, retorna ese objeto Nodo. Si no lo encuentra, retorna
      * null.
      */
-    private Nodo search_for_nodo(K key)
+    private int search_for_node_index(K key)
     {
         int hashMadre = h(key);
         int index, t = -1;
@@ -656,78 +639,55 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             {
                 if (nodo.getKey() == key) // las keys son las mismas.
                 {
-                    return nodo; // retorna el nodo.
+                    return index; // retorna el index de ese nodo.
                 }
                 else // las keys son distintas.
                 {
                     if (nodo.getTumba()) // ese nodo es una tumba.
                     {
-                        if (t == -1) { t = index; } // si no se encontró una tumba antes, guarda su posicion
+                        if (t == -1)  // ya encontró una tumba antes? si no, guarda el indice
+                        {
+                            t = index;
+                        }
                     }
                 }
             }
-            else { // el casillero está vacio.
-                if (t == -1) { // si no se encontró una tumba antes, retorna null.
-                    return null;
-                }
-                else return table[t]; // si se encontró una tumba, retorna la tumba.
-            }
-        }
-    }
-
-    // solamente busca por casillero vacio. Se lo llama despues
-    // de no haber encontrado un nodo con clave Key. Ver metodo put()
-    private int search_for_entry(K key)
-    {
-        int hashMadre = h(key);
-        int index;
-        for (int j = 0; ;j++)
-        {
-            index = (hashMadre + j^2) % table.length;
-            Nodo nodo = table[index];
-            if (nodo == null) // el casillero está vacio.
-            {
-                return index;
-            }
-        }
-    }
-
-    private int search_for_index(K key)
-    {
-        int hashMadre = h(key);
-        int index, t = -1;
-        for (int j = 0; ;j++)
-        {
-            index = (hashMadre + j^2) % table.length;
-            Nodo nodo = table[index];
-            if (nodo != null)
-            {
-                if (nodo.getKey() == key)
+            else
+            { // el casillero está vacio.
+                if (t == -1) // si no se encontró una tumba antes, retorna el index del casillero vacío.
                 {
                     return index;
                 }
-                else
-                {
-                    if (nodo.getTumba())
-                    {
-                        if (t == -1) { t = index; }
-                    }
-                }
+                return t; // sino retorna el casillero de la primera tumba que encontró
             }
-            else { return index; }
+
         }
-//        Iterator<Map.Entry<K, V>> it = bucket.iterator();
-//        for(int i=0; it.hasNext(); i++)
-//        {
-//            Map.Entry<K, V> entry = it.next();
-//            if(key.equals(entry.getKey())) return i;
-//        }
-//        return -1;
-    }  
+    }
 
 
+    private boolean esPrimo(int numero)
+    {
+        // El 0, 1 y 4 no son primos
+        if (numero == 0 || numero == 1 || numero == 4) {
+            return false;
+        }
+        for (int x = 2; x < numero / 2; x++) {
+            // Si es divisible por cualquiera de estos números, no
+            // es primo
+            if (numero % x == 0)
+                return false;
+        }
+        // Si no se pudo dividir por ninguno de los de arriba, sí es primo
+        return true;
+    }
 
-
+    private  int siguientePrimo(int n)
+    {
+        if ( n % 2 == 0)
+            n++;
+        for ( ; !esPrimo(n); n+=2 ) ;
+        return n;
+    }
 
     //************************ Clases Internas.
     
