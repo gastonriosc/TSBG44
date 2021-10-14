@@ -204,8 +204,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     @Override
     public boolean containsValue(Object value)
     {
-        return true;
-//        return this.contains(value);
+        return this.contains(value);
     }
 
     /**
@@ -350,16 +349,16 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      * @return un conjunto (un Set) a modo de vista de todas las claves
      *         mapeadas en la tabla.
      */
-//    @Override
-//    public Set<K> keySet()
-//    {
-//        if(keySet == null)
-//        {
-//            // keySet = Collections.synchronizedSet(new KeySet());
-//            keySet = new KeySet();
-//        }
-//        return keySet;
-//    }
+    @Override
+    public Set<K> keySet()
+    {
+        if(keySet == null)
+        {
+            // keySet = Collections.synchronizedSet(new KeySet());
+            keySet = new KeySet();
+        }
+        return keySet;
+    }
         
     /**
      * Retorna una Collection (colección) a modo de vista de todos los valores
@@ -379,16 +378,16 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      * @return una colección (un Collection) a modo de vista de todas los 
      *         valores mapeados en la tabla.
      */
-//    @Override
-//    public Collection<V> values()
-//    {
-//        if(values==null)
-//        {
-//            // values = Collections.synchronizedCollection(new ValueCollection());
-//            values = new ValueCollection();
-//        }
-//        return values;
-//    }
+    @Override
+    public Collection<V> values()
+    {
+        if(values==null)
+        {
+            // values = Collections.synchronizedCollection(new ValueCollection());
+            values = new ValueCollection();
+        }
+        return values;
+    }
 
     /**
      * Retorna un Set (conjunto) a modo de vista de todos los pares (key, value)
@@ -407,16 +406,16 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      * @return un conjunto (un Set) a modo de vista de todos los objetos 
      *         mapeados en la tabla.
      */
-//    @Override
-//    public Set<Map.Entry<K, V>> entrySet()
-//    {
-//        if(entrySet == null)
-//        {
-//            // entrySet = Collections.synchronizedSet(new EntrySet());
-//            entrySet = new EntrySet();
-//        }
-//        return entrySet;
-//    }
+    @Override
+    public Set<Map.Entry<K, V>> entrySet()
+    {
+        if(entrySet == null)
+        {
+            // entrySet = Collections.synchronizedSet(new EntrySet());
+            entrySet = new EntrySet();
+        }
+        return entrySet;
+    }
 
 
 
@@ -440,7 +439,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         t.table = (Nodo[]) new Object[this.table.length];
         for (int i = table.length ; i-- > 0 ; )
         {
-            t.table[i] = (TSBArrayList<Map.Entry<K, V>>) table[i].clone();
+            t.table[i] = (Nodo) table[i].clone();
         }
         t.keySet = null;
         t.entrySet = null;
@@ -464,10 +463,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
         try 
         {
-            Iterator<Map.Entry<K,V>> i = this.entrySet().iterator();
-            while(i.hasNext()) 
+            for (Nodo nodo : this.table)
             {
-                Map.Entry<K, V> e = i.next();
+                Map.Entry<K, V> e = nodo.entrada;
                 K key = e.getKey();
                 V value = e.getValue();
                 if(t.get(key) == null) { return false; }
@@ -476,13 +474,11 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                     if(!value.equals(t.get(key))) { return false; }
                 }
             }
-        } 
-        
+        }
         catch (ClassCastException | NullPointerException e) 
         {
             return false;
         }
-
         return true;    
     }
 
@@ -493,8 +489,11 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     @Override
     public int hashCode() // deberia ser la suma de todos los hashcodes...
     {
-        // HACER...
-        int hc = super.hashCode();
+        int hc = 0;
+        for (Nodo nodo : this.table)
+        {
+            if (!nodo.getTumba()) { hc += nodo.hashCode(); }
+        }
         return hc;
     }
     
@@ -664,7 +663,6 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         }
     }
 
-
     private boolean esPrimo(int numero)
     {
         // El 0, 1 y 4 no son primos
@@ -764,6 +762,15 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             hash = 61 * hash + Objects.hashCode(this.value);
             return hash;
         }
+        @Override
+        protected Object clone() throws CloneNotSupportedException
+        {
+            Entry<K, V> entry = (Entry<K, V>) super.clone();
+            entry.key = getKey();
+            entry.value = getValue();
+            return entry;
+        }
+
         
         @Override // de Object.
         public String toString()
@@ -812,6 +819,25 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         public V setValue(V value) { return entrada.setValue(value); }
 
         @Override
+        public int hashCode() // deberia ser la suma de todos los hashcodes...
+        {
+            return entrada.hashCode();
+        }
+
+        @Override
+        protected Object clone() throws CloneNotSupportedException
+        {
+            Nodo n = (Nodo) super.clone();
+            n.entrada = (Entry<K, V>) entrada.clone();
+            return n;
+        }
+
+        public Entry<K,V> getEntry()
+        {
+            return entrada;
+        }
+
+        @Override
         public String toString()
         {
             if (!this.tumba)
@@ -823,217 +849,195 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
     }
 
-//    /**
-//     * Clase interna que representa una vista de todas los Claves mapeadas en la
-//     * tabla: si la vista cambia, cambia también la tabla que le da respaldo, y
-//     * viceversa. La vista es stateless: no mantiene estado alguno (es decir, no
-//     * contiene datos ella misma, sino que accede y gestiona directamente datos
-//     * de otra fuente), por lo que no tiene atributos y sus métodos gestionan en
-//     * forma directa el contenido de la tabla. Están soportados los metodos para
-//     * eliminar un objeto (remove()), eliminar toodo el contenido (clear) y la
-//     * creación de un Iterator (que incluye el método Iterator.remove()).
-//     */
-//    private class KeySet extends AbstractSet<K>
-//    {
-//        @Override
-//        public Iterator<K> iterator()
-//        {
-//            return new KeySetIterator();
-//        }
-//        @Override
-//        public int size()
-//        {
-//            return TSBHashTableDA.this.count;
-//        }
-//        @Override
-//        public boolean contains(Object o)
-//        {
-//            return TSBHashTableDA.this.containsKey(o);
-//        }
-//        @Override
-//        public boolean remove(Object o)
-//        {
-//            return (TSBHashTableDA.this.remove(o) != null);
-//        }
-//        @Override
-//        public void clear()
-//        {
-//            TSBHashTableDA.this.clear();
-//        }
-//
-//
-//        private class KeySetIterator implements Iterator<K>
-//        {
-//            // índice de la lista actualmente recorrida...
-//            private int current_bucket;
-//
-//            // índice de la lista anterior (si se requiere en remove())...
-//            private int last_bucket;
-//
-//            // índice del elemento actual en el iterador (el que fue retornado
-//            // la última vez por next() y será eliminado por remove())...
-//            private int current_entry;
-//
-//            // flag para controlar si remove() está bien invocado...
-//            private boolean next_ok;
-//
-//            // el valor que debería tener el modCount de la tabla completa...
-//            private int expected_modCount;
-//
-//            /*
-//             * Crea un iterador comenzando en la primera lista. Activa el
-//             * mecanismo fail-fast.
-//             */
-//            public KeySetIterator()
-//            {
-//                current_bucket = 0;
-//                last_bucket = 0;
-//                current_entry = -1;
-//                next_ok = false;
-//                expected_modCount = TSBHashTableDA.this.modCount;
-//            }
-//
-//            /*
-//             * Determina si hay al menos un elemento en la tabla que no haya
-//             * sido retornado por next().
-//             */
-//            @Override
-//            public boolean hasNext()
-//            {
-//                // variable auxiliar t para simplificar accesos...
-//                TSBArrayList<Map.Entry<K, V>> []t = TSBHashTableDA.this.table;
-//
-//                if(TSBHashTableDA.this.isEmpty()) { return false; }
-//                if(current_bucket >= t.length) { return false; }
-//
-//                // bucket actual vacío o listo?...
-//                if(t[current_bucket].isEmpty() || current_entry >= t[current_bucket].size() - 1)
-//                {
-//                    // ... -> ver el siguiente bucket no vacío...
-//                    int next_bucket = current_bucket + 1;
-//                    while(next_bucket < t.length && t[next_bucket].isEmpty())
-//                    {
-//                        next_bucket++;
-//                    }
-//                    if(next_bucket >= t.length) { return false; }
-//                }
-//
-//                // en principio alcanza con esto... revisar...
-//                return true;
-//            }
-//
-//            /*
-//             * Retorna el siguiente elemento disponible en la tabla.
-//             */
-//            @Override
-//            public K next()
-//            {
-//                // control: fail-fast iterator...
-//                if(TSBHashTableDA.this.modCount != expected_modCount)
-//                {
-//                    throw new ConcurrentModificationException("next(): modificación inesperada de tabla...");
-//                }
-//
-//                if(!hasNext())
-//                {
-//                    throw new NoSuchElementException("next(): no existe el elemento pedido...");
-//                }
-//
-//                // variable auxiliar t para simplificar accesos...
-//                TSBArrayList<Map.Entry<K, V>> t[] = TSBHashTableDA.this.table;
-//
-//                // se puede seguir en el mismo bucket?...
-//                TSBArrayList<Map.Entry<K, V>> bucket = t[current_bucket];
-//                if(!t[current_bucket].isEmpty() && current_entry < bucket.size() - 1) { current_entry++; }
-//                else
-//                {
-//                    // si no se puede...
-//                    // ...recordar el índice del bucket que se va a abandonar..
-//                    last_bucket = current_bucket;
-//
-//                    // buscar el siguiente bucket no vacío, que DEBE existir, ya
-//                    // que se hasNext() retornó true...
-//                    current_bucket++;
-//                    while(t[current_bucket].isEmpty())
-//                    {
-//                        current_bucket++;
-//                    }
-//
-//                    // actualizar la referencia bucket con el núevo índice...
-//                    bucket = t[current_bucket];
-//
-//                    // y posicionarse en el primer elemento de ese bucket...
-//                    current_entry = 0;
-//                }
-//
-//                // avisar que next() fue invocado con éxito...
-//                next_ok = true;
-//
-//                // y retornar la clave del elemento alcanzado...
-//                K key = bucket.get(current_entry).getKey();
-//                return key;
-//            }
-//
-//            /*
-//             * Remueve el elemento actual de la tabla, dejando el iterador en la
-//             * posición anterior al que fue removido. El elemento removido es el
-//             * que fue retornado la última vez que se invocó a next(). El método
-//             * sólo puede ser invocado una vez por cada invocación a next().
-//             */
-//            @Override
-//            public void remove()
-//            {
-//                if(!next_ok)
-//                {
-//                    throw new IllegalStateException("remove(): debe invocar a next() antes de remove()...");
-//                }
-//
-//                // eliminar el objeto que retornó next() la última vez...
-//                Map.Entry<K, V> garbage = TSBHashTableDA.this.table[current_bucket].remove(current_entry);
-//
-//                // quedar apuntando al anterior al que se retornó...
-//                if(last_bucket != current_bucket)
-//                {
-//                    current_bucket = last_bucket;
-//                    current_entry = TSBHashTableDA.this.table[current_bucket].size() - 1;
-//                }
-//
-//                // avisar que el remove() válido para next() ya se activó...
-//                next_ok = false;
-//
-//                // la tabla tiene un elementon menos...
-//                TSBHashTableDA.this.count--;
-//
-//                // fail_fast iterator: todo en orden...
-//                TSBHashTableDA.this.modCount++;
-//                expected_modCount++;
-//            }
-//        }
-//    }
-//
-//
-//    /**
-//     * Clase interna que representa una vista de todos los PARES mapeados en la
-//     * tabla: si la vista cambia, cambia también la tabla que le da respaldo, y
-//     * viceversa. La vista es stateless: no mantiene estado alguno (es decir, no
-//     * contiene datos ella misma, sino que accede y gestiona directamente datos
-//     * de otra fuente), por lo que no tiene atributos y sus métodos gestionan en
-//     * forma directa el contenido de la tabla. Están soportados los metodos para
-//     * eliminar un objeto (remove()), eliminar toodo el contenido (clear) y la
-//     * creación de un Iterator (que incluye el método Iterator.remove()).
-//     */
-//    private class EntrySet extends AbstractSet<Map.Entry<K, V>>
-//    {
-//
-//        @Override
-//        public Iterator<Map.Entry<K, V>> iterator()
-//        {
-//            return new EntrySetIterator();
-//        }
-//        /*
-//         * Verifica si esta vista (y por lo tanto la tabla) contiene al par
-//         * que entra como parámetro (que debe ser de la clase Entry).
-//         */
+    /**
+     * Clase interna que representa una vista de todas los Claves mapeadas en la
+     * tabla: si la vista cambia, cambia también la tabla que le da respaldo, y
+     * viceversa. La vista es stateless: no mantiene estado alguno (es decir, no
+     * contiene datos ella misma, sino que accede y gestiona directamente datos
+     * de otra fuente), por lo que no tiene atributos y sus métodos gestionan en
+     * forma directa el contenido de la tabla. Están soportados los metodos para
+     * eliminar un objeto (remove()), eliminar toodo el contenido (clear) y la
+     * creación de un Iterator (que incluye el método Iterator.remove()).
+     */
+    private class KeySet extends AbstractSet<K>
+    {
+        @Override
+        public Iterator<K> iterator()
+        {
+            return new KeySetIterator();
+        }
+        @Override
+        public int size()
+        {
+            return TSBHashTableDA.this.count;
+        }
+        @Override
+        public boolean contains(Object o)
+        {
+            return TSBHashTableDA.this.containsKey(o);
+        }
+        @Override
+        public boolean remove(Object o)
+        {
+            return (TSBHashTableDA.this.remove(o) != null);
+        }
+        @Override
+        public void clear()
+        {
+            TSBHashTableDA.this.clear();
+        }
+
+
+        private class KeySetIterator implements Iterator<K>
+        {
+            // índice de la lista actualmente recorrida...
+            private int current_nodo;
+
+            // índice de la lista anterior (si se requiere en remove())...
+            private int last_nodo;
+
+            // flag para controlar si remove() está bien invocado...
+            private boolean next_ok;
+
+            // el valor que debería tener el modCount de la tabla completa...
+            private int expected_modCount;
+
+            /*
+             * Crea un iterador comenzando en la primera lista. Activa el
+             * mecanismo fail-fast.
+             */
+            public KeySetIterator()
+            {
+                current_nodo = 0;
+                last_nodo = 0;
+                next_ok = false;
+                expected_modCount = TSBHashTableDA.this.modCount;
+            }
+
+            /*
+             * Determina si hay al menos un elemento en la tabla que no haya
+             * sido retornado por next().
+             */
+            @Override
+            public boolean hasNext()
+            {
+                Nodo []t = TSBHashTableDA.this.table;
+
+                if(TSBHashTableDA.this.isEmpty()) { return false; }
+                if(current_nodo >= t.length) { return false; }
+
+                int next_nodo = current_nodo + 1;
+                for (; next_nodo < t.length -1; next_nodo++)
+                {
+                    if(t[next_nodo] != null && !t[next_nodo].getTumba()) {return true;}
+                }
+                return false;
+            }
+
+            /*
+             * Retorna el siguiente elemento disponible en la tabla.
+             */
+            @Override
+            public K next()
+            {
+                // control: fail-fast iterator...
+                if(TSBHashTableDA.this.modCount != expected_modCount)
+                {
+                    throw new ConcurrentModificationException("next(): modificación inesperada de tabla...");
+                }
+
+                if(!hasNext())
+                {
+                    throw new NoSuchElementException("next(): no existe el elemento pedido...");
+                }
+
+                // variable auxiliar t para simplificar accesos...
+                Nodo t[] = TSBHashTableDA.this.table;
+
+                Nodo nodo;
+
+                // ...recordar el índice del nodo que se va a abandonar..
+                last_nodo = current_nodo;
+
+                // buscar el siguiente bucket no vacío, que DEBE existir, ya
+                // que se hasNext() retornó true...
+                current_nodo++;
+                while(t[current_nodo] == null || t[current_nodo].getTumba())
+                {
+                    current_nodo++;
+                }
+
+                // actualizar la referencia bucket con el núevo índice...
+                nodo = t[current_nodo];
+
+                // avisar que next() fue invocado con éxito...
+                next_ok = true;
+
+                // y retornar la clave del elemento alcanzado...
+                K key = nodo.getKey();
+                return key;
+            }
+
+            /*
+             * Remueve el elemento actual de la tabla, dejando el iterador en la
+             * posición anterior al que fue removido. El elemento removido es el
+             * que fue retornado la última vez que se invocó a next(). El método
+             * sólo puede ser invocado una vez por cada invocación a next().
+             */
+            @Override
+            public void remove()
+            {
+                if(!next_ok)
+                {
+                    throw new IllegalStateException("remove(): debe invocar a next() antes de remove()...");
+                }
+
+                // eliminar el objeto que retornó next() la última vez...
+                V valor = TSBHashTableDA.this.remove(table[current_nodo].getKey());
+
+                // quedar apuntando al anterior al que se retornó...
+                if(last_nodo != current_nodo)
+                {
+                    current_nodo = last_nodo;
+                }
+
+                // avisar que el remove() válido para next() ya se activó...
+                next_ok = false;
+
+                // la tabla tiene un elementon menos...
+                TSBHashTableDA.this.count--;
+
+                // fail_fast iterator: todo en orden...
+                TSBHashTableDA.this.modCount++;
+                expected_modCount++;
+            }
+        }
+    }
+
+
+    /**
+     * Clase interna que representa una vista de todos los PARES mapeados en la
+     * tabla: si la vista cambia, cambia también la tabla que le da respaldo, y
+     * viceversa. La vista es stateless: no mantiene estado alguno (es decir, no
+     * contiene datos ella misma, sino que accede y gestiona directamente datos
+     * de otra fuente), por lo que no tiene atributos y sus métodos gestionan en
+     * forma directa el contenido de la tabla. Están soportados los metodos para
+     * eliminar un objeto (remove()), eliminar toodo el contenido (clear) y la
+     * creación de un Iterator (que incluye el método Iterator.remove()).
+     */
+    private class EntrySet extends AbstractSet<Map.Entry<K, V>>
+    {
+
+        @Override
+        public Iterator<Map.Entry<K, V>> iterator()
+        {
+            return new EntrySetIterator();
+        }
+        /*
+         * Verifica si esta vista (y por lo tanto la tabla) contiene al par
+         * que entra como parámetro (que debe ser de la clase Entry).
+         */
+
 //        @Override
 //        public boolean contains(Object o)
 //        {
@@ -1071,346 +1075,300 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 //            }
 //            return false;
 //        }
-//        @Override
-//        public int size()
-//        {
-//            return TSBHashTableDA.this.count;
-//        }
-//        @Override
-//        public void clear()
-//        {
-//            TSBHashTableDA.this.clear();
-//        }
-//
-//        private class EntrySetIterator implements Iterator<Map.Entry<K, V>>
-//        {
-//            // índice de la lista actualmente recorrida...
-//            private int current_bucket;
-//
-//            // índice de la lista anterior (si se requiere en remove())...
-//            private int last_bucket;
-//
-//            // índice del elemento actual en el iterador (el que fue retornado
-//            // la última vez por next() y será eliminado por remove())...
-//            private int current_entry;
-//
-//            // flag para controlar si remove() está bien invocado...
-//            private boolean next_ok;
-//
-//            // el valor que debería tener el modCount de la tabla completa...
-//            private int expected_modCount;
-//
-//            /*
-//             * Crea un iterador comenzando en la primera lista. Activa el
-//             * mecanismo fail-fast.
-//             */
-//            public EntrySetIterator()
-//            {
-//                current_bucket = 0;
-//                last_bucket = 0;
-//                current_entry = -1;
-//                next_ok = false;
-//                expected_modCount = TSBHashTableDA.this.modCount;
-//            }
-//
-//            /*
-//             * Determina si hay al menos un elemento en la tabla que no haya
-//             * sido retornado por next().
-//             */
-//            @Override
-//            public boolean hasNext()
-//            {
-//                // variable auxiliar t para simplificar accesos...
-//                TSBArrayList<Map.Entry<K, V>> []t = TSBHashTableDA.this.table;
-//
-//                if(TSBHashTableDA.this.isEmpty()) { return false; }
-//                if(current_bucket >= t.length) { return false; }
-//
-//                // bucket actual vacío o listo?...
-//                if(t[current_bucket].isEmpty() || current_entry >= t[current_bucket].size() - 1)
-//                {
-//                    // ... -> ver el siguiente bucket no vacío...
-//                    int next_bucket = current_bucket + 1;
-//                    while(next_bucket < t.length && t[next_bucket].isEmpty())
-//                    {
-//                        next_bucket++;
-//                    }
-//                    if(next_bucket >= t.length) { return false; }
-//                }
-//
-//                // en principio alcanza con esto... revisar...
-//                return true;
-//            }
-//
-//            /*
-//             * Retorna el siguiente elemento disponible en la tabla.
-//             */
-//            @Override
-//            public Map.Entry<K, V> next()
-//            {
-//                // control: fail-fast iterator...
-//                if(TSBHashTableDA.this.modCount != expected_modCount)
-//                {
-//                    throw new ConcurrentModificationException("next(): modificación inesperada de tabla...");
-//                }
-//
-//                if(!hasNext())
-//                {
-//                    throw new NoSuchElementException("next(): no existe el elemento pedido...");
-//                }
-//
-//                // variable auxiliar t para simplificar accesos...
-//                TSBArrayList<Map.Entry<K, V>> t[] = TSBHashTableDA.this.table;
-//
-//                // se puede seguir en el mismo bucket?...
-//                TSBArrayList<Map.Entry<K, V>> bucket = t[current_bucket];
-//                if(!t[current_bucket].isEmpty() && current_entry < bucket.size() - 1) { current_entry++; }
-//                else
-//                {
-//                    // si no se puede...
-//                    // ...recordar el índice del bucket que se va a abandonar..
-//                    last_bucket = current_bucket;
-//
-//                    // buscar el siguiente bucket no vacío, que DEBE existir, ya
-//                    // que se hasNext() retornó true...
-//                    current_bucket++;
-//                    while(t[current_bucket].isEmpty())
-//                    {
-//                        current_bucket++;
-//                    }
-//
-//                    // actualizar la referencia bucket con el núevo índice...
-//                    bucket = t[current_bucket];
-//
-//                    // y posicionarse en el primer elemento de ese bucket...
-//                    current_entry = 0;
-//                }
-//
-//                // avisar que next() fue invocado con éxito...
-//                next_ok = true;
-//
-//                // y retornar el elemento alcanzado...
-//                return bucket.get(current_entry);
-//            }
-//
-//            /*
-//             * Remueve el elemento actual de la tabla, dejando el iterador en la
-//             * posición anterior al que fue removido. El elemento removido es el
-//             * que fue retornado la última vez que se invocó a next(). El método
-//             * sólo puede ser invocado una vez por cada invocación a next().
-//             */
-//            @Override
-//            public void remove()
-//            {
-//                if(!next_ok)
-//                {
-//                    throw new IllegalStateException("remove(): debe invocar a next() antes de remove()...");
-//                }
-//
-//                // eliminar el objeto que retornó next() la última vez...
-//                Map.Entry<K, V> garbage = TSBHashTableDA.this.table[current_bucket].remove(current_entry);
-//
-//                // quedar apuntando al anterior al que se retornó...
-//                if(last_bucket != current_bucket)
-//                {
-//                    current_bucket = last_bucket;
-//                    current_entry = TSBHashTableDA.this.table[current_bucket].size() - 1;
-//                }
-//
-//                // avisar que el remove() válido para next() ya se activó...
-//                next_ok = false;
-//
-//                // la tabla tiene un elementon menos...
-//                TSBHashTableDA.this.count--;
-//
-//                // fail_fast iterator: todo en orden...
-//                TSBHashTableDA.this.modCount++;
-//                expected_modCount++;
-//            }
-//        }
-//    }
-//
-//
-//    /**
-//     * Clase interna que representa una vista de todos los VALORES mapeados en
-//     * la tabla: si la vista cambia, cambia también la tabla que le da respaldo,
-//     * y viceversa. La vista es stateless: no mantiene estado alguno (es decir,
-//     * no contiene datos ella misma, sino que accede y gestiona directamente los
-//     * de otra fuente), por lo que no tiene atributos y sus métodos gestionan en
-//     * forma directa el contenido de la tabla. Están soportados los metodos para
-//     * eliminar un objeto (remove()), eliminar toodo el contenido (clear) y la
-//     * creación de un Iterator (que incluye el método Iterator.remove()).
-//     */
-//    private class ValueCollection extends AbstractCollection<V>
-//    {
-//        @Override
-//        public Iterator<V> iterator()
-//        {
-//            return new ValueCollectionIterator();
-//        }
-//        @Override
-//        public int size()
-//        {
-//            return TSBHashTableDA.this.count;
-//        }
-//        @Override
-//        public boolean contains(Object o)
-//        {
-//            return TSBHashTableDA.this.containsValue(o);
-//        }
-//        @Override
-//        public void clear()
-//        {
-//            TSBHashTableDA.this.clear();
-//        }
-//
-//
-//        private class ValueCollectionIterator implements Iterator<V>
-//        {
-//            // índice de la lista actualmente recorrida...
-//            private int current_bucket;
-//
-//            // índice de la lista anterior (si se requiere en remove())...
-//            private int last_bucket;
-//
-//            // índice del elemento actual en el iterador (el que fue retornado
-//            // la última vez por next() y será eliminado por remove())...
-//            private int current_entry;
-//
-//            // flag para controlar si remove() está bien invocado...
-//            private boolean next_ok;
-//
-//            // el valor que debería tener el modCount de la tabla completa...
-//            private int expected_modCount;
-//
-//            /*
-//             * Crea un iterador comenzando en la primera lista. Activa el
-//             * mecanismo fail-fast.
-//             */
-//            public ValueCollectionIterator()
-//            {
-//                current_bucket = 0;
-//                last_bucket = 0;
-//                current_entry = -1;
-//                next_ok = false;
-//                expected_modCount = TSBHashTableDA.this.modCount;
-//            }
-//
-//            /*
-//             * Determina si hay al menos un elemento en la tabla que no haya
-//             * sido retornado por next().
-//             */
-//            @Override
-//            public boolean hasNext()
-//            {
-//                // variable auxiliar t para simplificar accesos...
-//                TSBArrayList<Map.Entry<K, V>> []t = TSBHashTableDA.this.table;
-//
-//                if(TSBHashTableDA.this.isEmpty()) { return false; }
-//                if(current_bucket >= t.length) { return false; }
-//
-//                // bucket actual vacío o listo?...
-//                if(t[current_bucket].isEmpty() || current_entry >= t[current_bucket].size() - 1)
-//                {
-//                    // ... -> ver el siguiente bucket no vacío...
-//                    int next_bucket = current_bucket + 1;
-//                    while(next_bucket < t.length && t[next_bucket].isEmpty())
-//                    {
-//                        next_bucket++;
-//                    }
-//                    if(next_bucket >= t.length) { return false; }
-//                }
-//
-//                // En principio alcanza con esto... revisar...
-//                return true;
-//            }
-//
-//            /*
-//             * Retorna el siguiente elemento disponible en la tabla.
-//             */
-//            @Override
-//            public V next()
-//            {
-//                // control: fail-fast iterator...
-//                if(TSBHashTableDA.this.modCount != expected_modCount)
-//                {
-//                    throw new ConcurrentModificationException("next(): modificación inesperada de tabla...");
-//                }
-//
-//                if(!hasNext())
-//                {
-//                    throw new NoSuchElementException("next(): no existe el elemento pedido...");
-//                }
-//
-//                // variable auxiliar t para simplificar accesos...
-//                TSBArrayList<Map.Entry<K, V>> []t = TSBHashTableDA.this.table;
-//
-//                // se puede seguir en el mismo bucket?...
-//                TSBArrayList<Map.Entry<K, V>> bucket = t[current_bucket];
-//                if(!t[current_bucket].isEmpty() && current_entry < bucket.size() - 1) { current_entry++; }
-//                else
-//                {
-//                    // si no se puede...
-//                    // ...recordar el índice del bucket que se va a abandonar..
-//                    last_bucket = current_bucket;
-//
-//                    // buscar el siguiente bucket no vacío, que DEBE existir, ya
-//                    // que se hasNext() retornó true...
-//                    current_bucket++;
-//                    while(t[current_bucket].isEmpty())
-//                    {
-//                        current_bucket++;
-//                    }
-//
-//                    // actualizar la referencia bucket con el núevo índice...
-//                    bucket = t[current_bucket];
-//
-//                    // y posicionarse en el primer elemento de ese bucket...
-//                    current_entry = 0;
-//                }
-//
-//                // avisar que next() fue invocado con éxito...
-//                next_ok = true;
-//
-//                // y retornar la clave del elemento alcanzado...
-//                V value = bucket.get(current_entry).getValue();
-//                return value;
-//            }
-//
-//            /*
-//             * Remueve el elemento actual de la tabla, dejando el iterador en la
-//             * posición anterior al que fue removido. El elemento removido es el
-//             * que fue retornado la última vez que se invocó a next(). El método
-//             * sólo puede ser invocado una vez por cada invocación a next().
-//             */
-//            @Override
-//            public void remove()
-//            {
-//                if(!next_ok)
-//                {
-//                    throw new IllegalStateException("remove(): debe invocar a next() antes de remove()...");
-//                }
-//
-//                // eliminar el objeto que retornó next() la última vez...
-//                Map.Entry<K, V> garbage = TSBHashTableDA.this.table[current_bucket].remove(current_entry);
-//
-//                // quedar apuntando al anterior al que se retornó...
-//                if(last_bucket != current_bucket)
-//                {
-//                    current_bucket = last_bucket;
-//                    current_entry = TSBHashTableDA.this.table[current_bucket].size() - 1;
-//                }
-//
-//                // avisar que el remove() válido para next() ya se activó...
-//                next_ok = false;
-//
-//                // la tabla tiene un elementon menos...
-//                TSBHashTableDA.this.count--;
-//
-//                // fail_fast iterator: todo en orden...
-//                TSBHashTableDA.this.modCount++;
-//                expected_modCount++;
-//            }
-//        }
-//    }
+        @Override
+        public int size()
+        {
+            return TSBHashTableDA.this.count;
+        }
+        @Override
+        public void clear()
+        {
+            TSBHashTableDA.this.clear();
+        }
+
+        private class EntrySetIterator implements Iterator<Map.Entry<K, V>>
+        {
+            // índice de la lista actualmente recorrida...
+            private int current_nodo;
+
+            // índice de la lista anterior (si se requiere en remove())...
+            private int last_nodo;
+
+            // flag para controlar si remove() está bien invocado...
+            private boolean next_ok;
+
+            // el valor que debería tener el modCount de la tabla completa...
+            private int expected_modCount;
+
+            /*
+             * Crea un iterador comenzando en la primera lista. Activa el
+             * mecanismo fail-fast.
+             */
+            public EntrySetIterator()
+            {
+                current_nodo = 0;
+                last_nodo = 0;
+                next_ok = false;
+                expected_modCount = TSBHashTableDA.this.modCount;
+            }
+
+            /*
+             * Determina si hay al menos un elemento en la tabla que no haya
+             * sido retornado por next().
+             */
+            @Override
+            public boolean hasNext()
+            {
+                Nodo []t = TSBHashTableDA.this.table;
+
+                if(TSBHashTableDA.this.isEmpty()) { return false; }
+                if(current_nodo >= t.length) { return false; }
+
+                int next_nodo = current_nodo + 1;
+                for (; next_nodo < t.length -1; next_nodo++)
+                {
+                    if(t[next_nodo] != null && !t[next_nodo].getTumba()) {return true;}
+                }
+                return false;
+            }
+
+            /*
+             * Retorna el siguiente elemento disponible en la tabla.
+             */
+            @Override
+            public Map.Entry<K, V> next()
+            {
+                // control: fail-fast iterator...
+                if(TSBHashTableDA.this.modCount != expected_modCount)
+                {
+                    throw new ConcurrentModificationException("next(): modificación inesperada de tabla...");
+                }
+
+                if(!hasNext())
+                {
+                    throw new NoSuchElementException("next(): no existe el elemento pedido...");
+                }
+
+                // variable auxiliar t para simplificar accesos...
+                Nodo t[] = TSBHashTableDA.this.table;
+
+                Nodo nodo;
+
+                // ...recordar el índice del nodo que se va a abandonar..
+                last_nodo = current_nodo;
+
+                // buscar el siguiente bucket no vacío, que DEBE existir, ya
+                // que se hasNext() retornó true...
+                current_nodo++;
+                while(t[current_nodo] == null || t[current_nodo].getTumba())
+                {
+                    current_nodo++;
+                }
+
+                // actualizar la referencia bucket con el núevo índice...
+                nodo = t[current_nodo];
+
+                // avisar que next() fue invocado con éxito...
+                next_ok = true;
+
+                // y retornar la clave del elemento alcanzado...
+                return nodo.getEntry();
+            }
+
+            /*
+             * Remueve el elemento actual de la tabla, dejando el iterador en la
+             * posición anterior al que fue removido. El elemento removido es el
+             * que fue retornado la última vez que se invocó a next(). El método
+             * sólo puede ser invocado una vez por cada invocación a next().
+             */
+            @Override
+            public void remove()
+            {
+                if(!next_ok)
+                {
+                    throw new IllegalStateException("remove(): debe invocar a next() antes de remove()...");
+                }
+
+                // eliminar el objeto que retornó next() la última vez...
+                V valor = TSBHashTableDA.this.remove(table[current_nodo].getKey());
+
+                // quedar apuntando al anterior al que se retornó...
+                if(last_nodo != current_nodo)
+                {
+                    current_nodo = last_nodo;
+                }
+
+                // avisar que el remove() válido para next() ya se activó...
+                next_ok = false;
+
+                // la tabla tiene un elementon menos...
+                TSBHashTableDA.this.count--;
+
+                // fail_fast iterator: todo en orden...
+                TSBHashTableDA.this.modCount++;
+                expected_modCount++;
+            }
+        }
+    }
+
+
+    /**
+     * Clase interna que representa una vista de todos los VALORES mapeados en
+     * la tabla: si la vista cambia, cambia también la tabla que le da respaldo,
+     * y viceversa. La vista es stateless: no mantiene estado alguno (es decir,
+     * no contiene datos ella misma, sino que accede y gestiona directamente los
+     * de otra fuente), por lo que no tiene atributos y sus métodos gestionan en
+     * forma directa el contenido de la tabla. Están soportados los metodos para
+     * eliminar un objeto (remove()), eliminar toodo el contenido (clear) y la
+     * creación de un Iterator (que incluye el método Iterator.remove()).
+     */
+    private class ValueCollection extends AbstractCollection<V>
+    {
+        @Override
+        public Iterator<V> iterator()
+        {
+            return new ValueCollectionIterator();
+        }
+        @Override
+        public int size()
+        {
+            return TSBHashTableDA.this.count;
+        }
+        @Override
+        public boolean contains(Object o)
+        {
+            return TSBHashTableDA.this.containsValue(o);
+        }
+        @Override
+        public void clear()
+        {
+            TSBHashTableDA.this.clear();
+        }
+
+
+        private class ValueCollectionIterator implements Iterator<V>
+        {
+            // índice de la lista actualmente recorrida...
+            private int current_nodo;
+
+            // índice de la lista anterior (si se requiere en remove())...
+            private int last_nodo;
+
+            // flag para controlar si remove() está bien invocado...
+            private boolean next_ok;
+
+            // el valor que debería tener el modCount de la tabla completa...
+            private int expected_modCount;
+
+            /*
+             * Crea un iterador comenzando en la primera lista. Activa el
+             * mecanismo fail-fast.
+             */
+            public ValueCollectionIterator()
+            {
+                current_nodo = 0;
+                last_nodo = 0;
+                next_ok = false;
+                expected_modCount = TSBHashTableDA.this.modCount;
+            }
+
+            /*
+             * Determina si hay al menos un elemento en la tabla que no haya
+             * sido retornado por next().
+             */
+            @Override
+            public boolean hasNext()
+            {
+                Nodo []t = TSBHashTableDA.this.table;
+
+                if(TSBHashTableDA.this.isEmpty()) { return false; }
+                if(current_nodo >= t.length) { return false; }
+
+                int next_nodo = current_nodo + 1;
+                for (; next_nodo < t.length -1; next_nodo++)
+                {
+                    if(t[next_nodo] != null && !t[next_nodo].getTumba()) {return true;}
+                }
+                return false;
+            }
+
+            /*
+             * Retorna el siguiente elemento disponible en la tabla.
+             */
+            @Override
+            public V next()
+            {
+                // control: fail-fast iterator...
+                if(TSBHashTableDA.this.modCount != expected_modCount)
+                {
+                    throw new ConcurrentModificationException("next(): modificación inesperada de tabla...");
+                }
+
+                if(!hasNext())
+                {
+                    throw new NoSuchElementException("next(): no existe el elemento pedido...");
+                }
+
+                // variable auxiliar t para simplificar accesos...
+                Nodo t[] = TSBHashTableDA.this.table;
+
+                Nodo nodo;
+
+                // ...recordar el índice del nodo que se va a abandonar..
+                last_nodo = current_nodo;
+
+                // buscar el siguiente bucket no vacío, que DEBE existir, ya
+                // que se hasNext() retornó true...
+                current_nodo++;
+                while(t[current_nodo] == null || t[current_nodo].getTumba())
+                {
+                    current_nodo++;
+                }
+
+                // actualizar la referencia bucket con el núevo índice...
+                nodo = t[current_nodo];
+
+                // avisar que next() fue invocado con éxito...
+                next_ok = true;
+
+                // y retornar la clave del elemento alcanzado...
+                V value = nodo.getValue();
+                return value;
+            }
+
+            /*
+             * Remueve el elemento actual de la tabla, dejando el iterador en la
+             * posición anterior al que fue removido. El elemento removido es el
+             * que fue retornado la última vez que se invocó a next(). El método
+             * sólo puede ser invocado una vez por cada invocación a next().
+             */
+            @Override
+            public void remove()
+            {
+                if(!next_ok)
+                {
+                    throw new IllegalStateException("remove(): debe invocar a next() antes de remove()...");
+                }
+
+                // eliminar el objeto que retornó next() la última vez...
+                V valor = TSBHashTableDA.this.remove(table[current_nodo].getKey());
+
+                // quedar apuntando al anterior al que se retornó...
+                if(last_nodo != current_nodo)
+                {
+                    current_nodo = last_nodo;
+                }
+
+                // avisar que el remove() válido para next() ya se activó...
+                next_ok = false;
+
+                // la tabla tiene un elementon menos...
+                TSBHashTableDA.this.count--;
+
+                // fail_fast iterator: todo en orden...
+                TSBHashTableDA.this.modCount++;
+                expected_modCount++;
+            }
+        }
+    }
 }
