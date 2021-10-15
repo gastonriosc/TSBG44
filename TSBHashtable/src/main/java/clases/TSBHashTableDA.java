@@ -56,7 +56,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     //************************ Atributos privados (estructurales).
     
     // la tabla hash: el arreglo que contiene las listas de desborde...
-    private Nodo []table;
+    private Object []table;
     
     // el tamaño inicial de la tabla (tamaño con el que fue creada)...
     private int initial_capacity;
@@ -135,7 +135,11 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             }
 
 
-        this.table = (Nodo[]) new Object[initial_capacity];
+        this.table = new Object[initial_capacity];
+        for (int i = 0; i < table.length; i++)
+        {
+            table[i] = new Entry<>();   // todo puede ser null?
+        }
         
         this.initial_capacity = initial_capacity;
         this.load_factor = load_factor;
@@ -223,7 +227,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
        if(key == null) throw new NullPointerException("get(): parámetro null");
 
        int index = this.search_for_node_index((K)key);
-       Nodo nodo = table[index];
+       Nodo nodo = (Nodo) table[index];
        return (nodo != null && !nodo.getTumba()) ? nodo.getValue() : null; // se evalua que sea un nodo real y no una tumba.
     }
 
@@ -249,7 +253,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         int index;
         V old = null;
         index = this.search_for_node_index(key);
-        Nodo nodo = table[index];
+        Nodo nodo = (Nodo) table[index];
         if(nodo != null) // es de tipo Nodo
         {
             if (!nodo.getTumba()) // si es nodo, no es tumba
@@ -286,7 +290,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
        int index = this.search_for_node_index((K)key);
        V old = null;
-       Nodo nodo = table[index];
+       Nodo nodo = (Nodo) table[index];
        if(nodo != null && !nodo.getTumba())
        {
            old = table[index].getValue();
@@ -456,10 +460,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     @Override
     public boolean equals(Object obj) 
     {
-        if(!(obj instanceof Map)) { return false; }
+        if(!(obj instanceof Map)) { return false; } // pregunta si el ojeto es instancia de map sino retorna False
 
         Map<K, V> t = (Map<K, V>) obj;
-        if(t.size() != this.size()) { return false; }
+        if(t.size() != this.size()) { return false; } // si los size son distintos ya es false
 
         try 
         {
@@ -564,7 +568,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         // recorrer el viejo arreglo y redistribuir los objetos que tenia...
         for(int i = 0; i < this.table.length; i++)
         {
-            Nodo nodo = table[i];
+            Nodo nodo = (Nodo) table[i];
             if (!nodo.getTumba()) // si no es una tumba, llama al put() para agregarlo a la nueva tabla
             {
                 put(nodo.getKey(), nodo.getValue());
@@ -626,14 +630,14 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      * Si lo encuentra, retorna ese objeto Nodo. Si no lo encuentra, retorna
      * null.
      */
-    private int search_for_node_index(K key)
+    private int search_for_entry_index(K key)
     {
         int hashMadre = h(key);
         int index, t = -1;
         for (int j = 0; ;j++)
         {
             index = (hashMadre + j^2) % table.length;
-            Nodo nodo = table[index];
+            Entry entrada = (Entry) table[index];
             if (nodo != null) // el casillero está ocupado.
             {
                 if (nodo.getKey() == key) // las keys son las mismas.
@@ -700,6 +704,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         private K key;
         private V value;
 
+        private int estado;
+
         //****************** Constructor
 
         public Entry(K key, V value) 
@@ -710,6 +716,25 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             }
             this.key = key;
             this.value = value;
+            this.estado = 1;
+        }
+
+        public Entry(K key, V value,int estado)
+        {
+            if(key == null || value == null)
+            {
+                throw new IllegalArgumentException("Entry(): parámetro null...");
+            }
+            this.key = key;
+            this.value = value;
+            this.estado = estado ; // 0 = abierto  1 = cerrado  2 = tumba
+        }
+
+        public Entry()
+        {
+            this.key = null;
+            this.value = null;
+            this.estado = 0;
         }
 
 
@@ -728,6 +753,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             return value;
         }
 
+        public int getEstado(){return estado; }
+
         @Override
         public V setValue(V value) 
         {
@@ -741,14 +768,28 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             return old;
         }
 
+        public void setEstado(int i)  // todo devolvemos el estado anterior?
+        {
+//            if(value == null)
+//            {
+//                throw new IllegalArgumentException("setValue(): parámetro null...");
+//            }
+            if (i == 0 || i ==1 || i == 2)
+            this.estado = i;
+            // retornamos el old?
+        }
+
         @Override
         public boolean equals(Object obj) 
         {
             if (this == obj) { return true; }
             if (obj == null) { return false; }
             if (this.getClass() != obj.getClass()) { return false; }
-            
+
             final Entry other = (Entry) obj;
+            if (this.estado != 1 || other.estado != 1){return false; } // si las entry no estan cerradas no las deberia poder comparar
+            
+
             if (!Objects.equals(this.key, other.key)) { return false; }
             if (!Objects.equals(this.value, other.value)) { return false; }            
             return true;
@@ -801,6 +842,11 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         {
             this(entrada, false);
         }
+//        public Nodo()
+//        {
+//            this.entrada = null;
+//            this.tumba = false;
+//        }
 
         public K getKey()
         {
