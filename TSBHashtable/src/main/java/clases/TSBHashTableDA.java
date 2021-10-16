@@ -507,11 +507,12 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     //************************ Métodos específicos de la clase.
 
     /**
-     * Determina si alguna clave de la tabla está asociada al objeto value que
-     * entra como parámetro. Equivale a containsValue(). Si el value es null
-     * retorna false.
-     * @param value el objeto a buscar en la tabla.
-     * @return true si alguna clave está asociada efectivamente a ese value.
+     * Determina si algún valor de la tabla está asociado al objeto value que
+     * entra como parámetro. Si el value es null retorna false, y en el caso de que
+     * se encuentre algún objeto con el value ingresado como parámetro, se retorna true.
+     * @param value es el objeto a buscar en la tabla.
+     * @return true si el value ingresado por parámetro coincide con uno de los value de la tabla
+     *          y si el estado es "cerrado" (=1).
      */
     public boolean contains(Object value)
     {
@@ -531,10 +532,13 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
     /**
      * Incrementa el tamaño de la tabla y reorganiza su contenido. Se invoca 
-     * automaticamente cuando se detecta que la cantidad de nodos
+     * automaticamente cuando se detecta que la cantidad de entry
      * supera a cierto  valor critico dado por (load_factor * table.length). Si el
      * valor de load_factor es 0.5, esto implica que el límite antes de invocar
      * rehash es del 50% de el tamaño de la tabla.
+     * Para calcular el nuevo tamaño, lo que hace es buscar el primo que le sigue al resultado de hacer el
+     * largo anterior multiplicado por dos. Una vez obtenido, reordena. También se verifica que el nuevo
+     * primo no supere al tamaño máximo de la tabla.
      */
     protected void rehash()
     {
@@ -586,7 +590,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         // metodos hash.
     /**
      * Función hash. Toma una clave entera k y calcula y retorna un índice 
-     * válido para esa clave para entrar en la tabla.     
+     * válido para esa clave para entrar en la tabla.
+     * @param k recibe una clave de tipo int
+     * @return un indice válido de la tabla para dicha clave.
      */
 
     private int h(int k)
@@ -596,7 +602,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     
     /**
      * Función hash. Toma un objeto key que representa una clave y calcula y 
-     * retorna un índice válido para esa clave para entrar en la tabla.     
+     * retorna un índice válido para esa clave para entrar en la tabla.
+     * @param key se recibe un objeto clave
+     * @return un indice valido para dicha clave para la tabla.
      */
     private int h(K key)
     {
@@ -606,7 +614,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     /**
      * Función hash. Toma un objeto key que representa una clave y un tamaño de 
      * tabla t, y calcula y retorna un índice válido para esa clave dedo ese
-     * tamaño.     
+     * tamaño.
+     * @param key es un objeto del tipo key
+     * @param t es el tamaño de la tabla, el cual es un int
+     * @return un indice valido para esa clave y para el tamaño de tabla ingresado
      */
     private int h(K key, int t)
     {
@@ -615,7 +626,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     
     /**
      * Función hash. Toma una clave entera k y un tamaño de tabla t, y calcula y 
-     * retorna un índice válido para esa clave dado ese tamaño.     
+     * retorna un índice válido para esa clave dado ese tamaño.
+     * @param t recibe el tamaño de la tabla
+     * @param k recibe una clave de tipo entera
+     * @return un indice valido para el numero de clave y tamaño de tabla soliciotados.
      */
     private int h(int k, int t)
     {
@@ -667,6 +681,13 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         }
     }
 
+
+    /**
+     * Método que verifica que si número ingresado por parámetro es primo. En caso de serlo, retorna true
+     * @param numero es el numero que se quiere verificar si es primo
+     * @return retorna un valor booleano. Retrona true en caso de que el número a verificar es primo,
+     *         y false en caso de no serlo.
+     */
     private boolean esPrimo(int numero)
     {
         // El 0, 1 y 4 no son primos
@@ -683,6 +704,12 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         return true;
     }
 
+
+    /**
+     * En un método que busca el siguiente primo de un número ingresado por parámetro.
+     * @param n valor del tipo int que representa el número del que se quiere saber el siguiente primo
+     * @return el valor del siguiente número primo del número solicitado
+     */
     private  int siguientePrimo(int n)
     {
         if ( n % 2 == 0)
@@ -738,18 +765,34 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
         //****************** Implementación de métodos especificados por Map.Entry
 
+
+        /**
+         * Método que obtiene el valor de la clave de un objeto del tipo key.
+         * @return el valor de la key
+         */
         @Override
         public K getKey() 
         {
             return key;
         }
 
+        /**
+         * Método que obtiene el valor de un objeto del tipo value
+         * @return un valor
+         */
         @Override
         public V getValue() 
         {
             return value;
         }
 
+
+        /**
+         * Método que setea el valor de un objeto del tipo value
+         * @param value es el valor por el que se debe setear el valor anterior
+         * @return el valor seteado o actualiazdo
+         * @throws IllegalArgumentException si el value ingresado como parametro es nulo
+         */
         @Override
         public V setValue(V value)
         {
@@ -763,13 +806,35 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             return old;
         }
 
+
+        /**
+         * Método que obtiene el estado del entry.
+         * @return el valor que identifica el estado = 0 si es abierto, 1 si es cerrado o ocupado y 2 si está eliminado
+         */
         public int getEstado(){return estado; }
+
+        /**
+         * Método que modifica el valor del estado de entry.
+         * Lo que hace es setear cualquiera de los valores del estado (ya sea 0,1 o 2) al
+         * valor ingresado como parámetro.
+         * @param i valor por el que se debe cambiar el estado
+         */
 
         public void setEstado(int i)
         {
             if (i == 0 || i ==1 || i == 2) {this.estado = i;}
         }
 
+
+        /**
+         * Método que obtiene un valor booleano true en caso de que los dos objetos comparados sean iguales
+         * (el ingresado por parámetro y el actual de la tabla).
+         * @param obj recibe el objeto con el cual se quiere realizar la comparación
+         * @return un valor true en caso de que sean iguales los objetos comparados. Retorna false
+         *         en caso de que el objeto ingresado sea null; en el caso de que la clase de los objetos sea diferente;
+         *         en el caso de que el estado de alguno de los dos objetos sea abierto o borrado. Finalmente,
+         *         tambien retorna false en el caso de que las key o value de ambos objetos sean diferentes.
+         */
         @Override
         public boolean equals(Object obj) 
         {
@@ -786,6 +851,11 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             return true;
         }
 
+        /**
+         * Método que permite obtener un valor identificador para un objeto. Este debería ser, en lo medida de lo
+         * posible, diferente para cada objeto que sea diferente
+         * @return el valor hash, que es el identificador del objeto
+         */
         @Override
         public int hashCode()
         {
@@ -794,6 +864,15 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             hash = 61 * hash + Objects.hashCode(this.value);
             return hash;
         }
+
+        /**
+         * Método que obtiene un objeto clonado, es decir, una copia superficial de otro.
+         * El nuevo objeto de tipo Entry tiene la misma key y mismo value del objeto del cual se está clonando, pero
+         * ambos objetos son independientes entre sí
+         * @return el objeto clonado de tipo entry
+         * @throws CloneNotSupportedException
+         */
+
         @Override
         protected Object clone() throws CloneNotSupportedException
         {
@@ -803,7 +882,11 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             return entry;
         }
 
-        
+
+        /**
+         * Método redefinido que retorna una cadena.
+         * @return el string reultante de la concatenación de otros strings
+         */
         @Override // de Object.
         public String toString()
         {
@@ -828,21 +911,44 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         {
             return new KeySetIterator();
         }
+
+        /**
+         * Método que obtiene la cantidad de elementos contenidos en la tabla.
+         * @return la cantidad de elementos contenidos en la tabla
+         */
         @Override
         public int size()
         {
             return TSBHashTableDA.this.count;
         }
+
+        /**
+         * Método que verifica si la tabla contiene o posee en su interior el objeto
+         * enviado por parametro
+         * @param o se recibe el objeto que se quiere verificar si se encuentra en la tabla
+         * @return retorna un true en caso de que el objeto esté contenido en la tabla, y un false en caso
+         *         de que no lo esté
+         */
         @Override
         public boolean contains(Object o)
         {
             return TSBHashTableDA.this.containsKey(o);
         }
+
+        /**
+         * Método que elimina o remueve de la tabla el objeto pasado por parámetro.
+         * @param o recibe un objeto que se quiere remover de la tabla
+         * @return un booleano, true si se pudo remover y false si no se removió el objeto
+         */
         @Override
         public boolean remove(Object o)
         {
             return (TSBHashTableDA.this.remove(o) != null);
         }
+
+        /**
+         * Método que limpia el interior de la tabla. No retorna nada
+         */
         @Override
         public void clear()
         {
@@ -876,10 +982,14 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 expected_modCount = TSBHashTableDA.this.modCount;
             }
 
-            /*
-             * Determina si hay al menos un elemento en la tabla que no haya
-             * sido retornado por next().
+
+            /**
+             * Método que retorna un true en caso de que haya un próximo elemento en la tabla, es decir,
+             * que su estado sea "cerrado". Va avanzando de uno en uno buscando y corroborando cada estado de cada entry
+             * @return un valor true en caso de que haya un próximo elemento en la tabla y retorna false en
+             *          los siguientes casos: la tabla está vacia, la posición actual superó al tamaño de la tabla.
              */
+
             @Override
             public boolean hasNext()
             {
@@ -899,6 +1009,13 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
             /*
              * Retorna el siguiente elemento disponible en la tabla.
+             */
+            /**
+             * Método que obtiene el siguiente elemento que se encuentre en la tabla.
+             * @return la clave del objeto encontrado en posiciones posteriores de la tabla.
+             * @throws  ConcurrentModificationException
+             * @throws NoSuchElementException en caso de que el metodo hasNext haya dado false, es decir, que no
+             * hay un próximo elemento
              */
             @Override
             public K next()
@@ -940,12 +1057,15 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 return key;
             }
 
-            /*
-             * Remueve el elemento actual de la tabla, dejando el iterador en la
-             * posición anterior al que fue removido. El elemento removido es el
+
+            /**
+             * Remueve el elemento actual de la tabla. El elemento removido es el
              * que fue retornado la última vez que se invocó a next(). El método
-             * sólo puede ser invocado una vez por cada invocación a next().
+             * sólo puede ser invocado una vez por cada invocación a next(). Además, a la tabla se le
+             * descuenta un elemento a través del count
+             * @throws IllegalStateException en caso de que el next no haya sido invocado con éxito.
              */
+
             @Override
             public void remove()
             {
