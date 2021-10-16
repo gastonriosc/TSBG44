@@ -13,9 +13,9 @@ import java.util.Set;
 
 /**
  * Clase para emular la funcionalidad de la clase java.util.Hashtable provista
- * en forma nativa por Java. Una TSBHashtable usa un arreglo de listas de la 
- * clase TSBArrayList a modo de buckets (o listas de desborde) para resolver las
- * colisiones que pudieran presentarse. 
+ * en forma nativa por Java. Una TSBHashtable usa un arreglo de la clase entry
+ * que implementa la interfaz map, y la estrategia de direccionamiento abierto
+ * para resolver las colisiones que pudieran presentarse.
  * 
  * Se almacenan en la tabla pares de objetos (key, value), en donde el objeto 
  * key actúa como clave para identificar al objeto value. La tabla no admite 
@@ -30,15 +30,10 @@ import java.util.Set;
  * rehash: si loadFactor es 0.75, entonces se hará un rehash cuando la cantidad 
  * de casillas ocupadas en el arreglo de soporte sea un 75% del tamaño de ese 
  * arreglo. En nuestra clase TSBHashtable, mantuvimos el concepto de loadFactor
- * (ahora llamado load_factor) pero con una interpretación distinta: en nuestro
- * modelo, se lanza un rehash si la cantidad promedio de valores por lista es 
- * mayor a cierto número constante y pequeño, que asociamos al load_factor para 
- * mantener el espíritu de la implementación nativa. En nuestro caso, si el 
- * valor load_factor es 0.8 entonces se lanzará un rehash si la cantidad 
- * promedio de valores por lista es mayor a 0.8 * 10 = 8 elementos por lista.
+ * (ahora llamado load_factor).
  * 
- * @author Ing. Valerio Frittelli.
- * @version Septiembre de 2017.
+ * @author Ardiles Micaela, Avila Pilar, Ríos Cardona Gastón, Targón Juan Cruz
+ * @version Octubre del 2021.
  * @param <K> el tipo de los objetos que serán usados como clave en la tabla.
  * @param <V> el tipo de los objetos que serán los valores de la tabla.
  */
@@ -48,8 +43,6 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     
     // el tamaño máximo que podrá tener el arreglo de soporte...
     private final static int MAX_SIZE = Integer.MAX_VALUE; // el MAX_VALUE de Integer también es primo.
-
-
 
 
     //************************ Atributos privados (estructurales).
@@ -95,7 +88,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
     /**
      * Crea una tabla vacía, con la capacidad inicial igual a 11 y con factor 
-     * de carga igual a 0.8f. 
+     * de carga igual a 0.5f.
      */    
     public TSBHashTableDA()
     {
@@ -104,7 +97,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     
     /**
      * Crea una tabla vacía, con la capacidad inicial indicada y con factor 
-     * de carga igual a 0.8f. 
+     * de carga igual a 0.5f.
      * @param initial_capacity la capacidad inicial de la tabla.
      */    
     public TSBHashTableDA(int initial_capacity)
@@ -115,8 +108,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     /**
      * Crea una tabla vacía, con la capacidad inicial indicada y con el factor 
      * de carga indicado. Si la capacidad inicial indicada por initial_capacity 
-     * es menor o igual a 0, la tabla será creada de tamaño 11. Si el factor de
-     * carga indicado es negativo o cero, se ajustará a 0.8f.
+     * es menor o igual a 2, la tabla será creada de tamaño 11. Si el factor de
+     * carga indicado es negativo o cero, se ajustará a 0.5f.
      * @param initial_capacity la capacidad inicial de la tabla.
      * @param load_factor el factor de carga de la tabla.
      */
@@ -233,7 +226,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     /**
      * Asocia el valor (value) especificado, con la clave (key) especificada en
      * esta tabla. Si la tabla contenía previamente un valor asociado para la 
-     * clave, entonces el valor anterior es reemplazado por el nuevo (y en este 
+     * clave, entonces el valor anterior es reemplazado por el nuevo (y en este
      * caso el tamaño de la tabla no cambia). 
      * @param key la clave del objeto que se quiere agregar a la tabla.
      * @param value el objeto que se quiere agregar a la tabla.
@@ -274,7 +267,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
     /**
      * Elimina de la tabla la clave key (y su correspondiente valor asociado).  
-     * El método no hace nada si la clave no está en la tabla. 
+     * Utiliza el metodo search_for_entry_index para obtener el índice del lugar
+     * donde debería encontrarse el objeto.A partir de ahí se evalúa si ya existe
+     * la key ingresada por parámetro en la tabla.
      * @param key la clave a eliminar.
      * @return El objeto al cual la clave estaba asociada, o null si la clave no
      *         estaba en la tabla.
@@ -317,7 +312,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     /**
      * Elimina todo el contenido de la tabla, de forma de dejarla vacía. En esta
      * implementación además, el arreglo de soporte vuelve a tener el tamaño que
-     * inicialmente tuvo al ser creado el objeto.
+     * inicialmente tuvo al ser creado el objeto (inicial_capacity).
      */
     @Override
     public void clear() 
@@ -429,10 +424,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     //************************ Redefinición de métodos heredados desde Object.
     
     /**
-     * Retorna una copia superficial de la tabla. Las listas de desborde o 
-     * buckets que conforman la tabla se clonan ellas mismas, pero no se clonan 
-     * los objetos que esas listas contienen: en cada bucket de la tabla se 
-     * almacenan las direcciones de los mismos objetos que contiene la original. 
+     * Retorna una copia superficial de la tabla. En cada casillero del vector
+     * tabla se almacenan las direcciones de los mismos objetos que contiene
+     * la original. Se utiliza el metodo putAll para hacer la copia.
      * @return una copia superficial de la tabla.
      * @throws java.lang.CloneNotSupportedException si la clase no implementa la
      *         interface Cloneable.    
@@ -449,6 +443,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
     /**
      * Determina si esta tabla es igual al objeto espeficicado.
+     * Si el objeto a comparar no es de la clase Map o sus
+     * tamaños no son iguales, retorna false.
      * @param obj el objeto a comparar con esta tabla.
      * @return true si los objetos son iguales.
      */
@@ -464,8 +460,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     }
 
     /**
-     * Retorna un hash code para la tabla completa.
-     * @return un hash code para la tabla.
+     * Retorna un hash code para la tabla completa. El cual
+     * es sumatoria de todos los hash code de cada objeto Entry
+     * dentro de la tabla.
+     * @return un acumulador que representa el hash code para la tabla.
      */
     @Override
     public int hashCode() // deberia ser la suma de todos los hashcodes...
@@ -480,7 +478,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
     }
     
     /**
-     * Devuelve el contenido de la tabla en forma de String.
+     * Devuelve el contenido de la tabla en forma de String. Recorriendo
+     * cada objeto Entry para pedirle su implementación del método toString().
      * @return una cadena con el contenido completo de la tabla.
      */
     @Override
@@ -506,7 +505,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
     /**
      * Determina si alguna clave de la tabla está asociada al objeto value que
-     * entra como parámetro. Equivale a containsValue().
+     * entra como parámetro. Equivale a containsValue(). Si el value es null
+     * retorna false.
      * @param value el objeto a buscar en la tabla.
      * @return true si alguna clave está asociada efectivamente a ese value.
      */
