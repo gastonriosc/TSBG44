@@ -110,6 +110,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      * de carga indicado. Si la capacidad inicial indicada por initial_capacity 
      * es menor o igual a 2, la tabla será creada de tamaño 11. Si el factor de
      * carga indicado es negativo o cero, se ajustará a 0.5f.
+     * Con un array mayor a 3 y largo igual a un número primo, junto a una ocupacion
+     * de maximo un 50%, se puede garantizar una iteración por todos los casilleros de la tabla
+     * sin dejar alguno sin visitar.
      * @param initial_capacity la capacidad inicial de la tabla.
      * @param load_factor el factor de carga de la tabla.
      */
