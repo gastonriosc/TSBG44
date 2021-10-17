@@ -903,6 +903,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
      */
     private class KeySet extends AbstractSet<K>
     {
+        /**
+         * Retorna un iterador para la tabla.
+         */
         @Override
         public Iterator<K> iterator()
         {
@@ -955,10 +958,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
         private class KeySetIterator implements Iterator<K>
         {
-            // índice de la lista actualmente recorrida...
+            // índice de la entry actualmente recorrida...
             private int current_entry;
 
-            // índice de la lista anterior (si se requiere en remove())...
+            // índice de la entry anterior (si se requiere en remove())...
             private int last_entry;
 
             // flag para controlar si remove() está bien invocado...
@@ -967,8 +970,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             // el valor que debería tener el modCount de la tabla completa...
             private int expected_modCount;
 
-            /*
-             * Crea un iterador comenzando en la primera lista. Activa el
+            /**
+             * Metodo que Crea un iterador comenzando en la primera entry. Activa el
              * mecanismo fail-fast.
              */
             public KeySetIterator()
@@ -1004,9 +1007,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 return false;
             }
 
-            /*
-             * Retorna el siguiente elemento disponible en la tabla.
-             */
+
             /**
              * Método que obtiene el siguiente elemento que se encuentre en la tabla.
              * @return la clave del objeto encontrado en posiciones posteriores de la tabla.
@@ -1033,10 +1034,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
                 Entry entry;
 
-                // ...recordar el índice del nodo que se va a abandonar.
+                // ...recordar el índice del entry que se va a abandonar.
                 last_entry = current_entry;
 
-                // buscar el siguiente bucket no vacío, que DEBE existir, ya
+                // buscar el siguiente Entry con estado 1, que DEBE existir, ya
                 // que se hasNext() retornó true...
                 current_entry++;
                 entry = (Entry) t[current_entry];
@@ -1083,7 +1084,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 // avisar que el remove() válido para next() ya se activó...
                 next_ok = false;
 
-                // la tabla tiene un elementon menos...
+                // la tabla tiene un elemento menos...
                 TSBHashTableDA.this.count--;
 
                 // fail_fast iterator: todo en orden...
@@ -1112,9 +1113,12 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         {
             return new EntrySetIterator();
         }
-        /*
-         * Verifica si esta vista (y por lo tanto la tabla) contiene al par
-         * que entra como parámetro (que debe ser de la clase Entry).
+
+        /**
+         * Verifica si esta Vista (y la tabla) contienen el par que entra como parametro
+         * (de clase Entry)
+         * @return un valor booleano, true en caso de contener el par y false en caso
+         * de no contenerlo.
          */
 
         @Override
@@ -1132,9 +1136,11 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             if(value == get(key)) { return true; }
             return false;
         }
-        /*
-         * Elimina de esta vista (y por lo tanto de la tabla) al par que entra
-         * como parámetro (y que debe ser de tipo Entry).
+        /**
+         * Elimina de esta vista (y de la tabla) al par que entra como parametro
+         * (debe ser un par del tipo Entry)
+         * @return un valor booleano, true en caso de haberlo removido
+         * y false en caso de no haber encontrado el par.
          */
         @Override
         public boolean remove(Object o)
@@ -1154,11 +1160,20 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             }
             return false;
         }
+
+        /**
+         * Método que obtiene la cantidad de elementos contenidos en la vista (y por lo tanto en la tabla)
+         * @return la cantidad de elementos contenidos en la tabla.
+         */
         @Override
         public int size()
         {
             return TSBHashTableDA.this.count;
         }
+
+        /**
+         * Método que limpia el interior de la tabla. No retorna nada
+         */
         @Override
         public void clear()
         {
@@ -1167,10 +1182,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
         private class EntrySetIterator implements Iterator<Map.Entry<K, V>>
         {
-            // índice de la lista actualmente recorrida...
+            // índice de la entry actual...
             private int current_entry;
 
-            // índice de la lista anterior (si se requiere en remove())...
+            // índice de la entry anterior (si se requiere en remove())...
             private int last_entry;
 
             // flag para controlar si remove() está bien invocado...
@@ -1179,8 +1194,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             // el valor que debería tener el modCount de la tabla completa...
             private int expected_modCount;
 
-            /*
-             * Crea un iterador comenzando en la primera lista. Activa el
+            /**
+             * Metodo que crea un iterador comenzando en la primera entry. Activa el
              * mecanismo fail-fast.
              */
             public EntrySetIterator()
@@ -1191,9 +1206,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 expected_modCount = TSBHashTableDA.this.modCount;
             }
 
-            /*
-             * Determina si hay al menos un elemento en la tabla que no haya
-             * sido retornado por next().
+            /**
+             * Metodo que busca si hay un proxmima entry en la tabla con estado 1
+             * @return true si se encontro otra entry y false si no se encontro.
              */
             @Override
             public boolean hasNext()
@@ -1213,8 +1228,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 return false;
 
             }
-            /*
-             * Retorna el siguiente elemento disponible en la tabla.
+            /**
+             * Método que retorna el siguiente elemento disponible en la tabla.
              */
             @Override
             public Map.Entry<K, V> next()
@@ -1235,11 +1250,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
                 Entry entry;
 
-                // ...recordar el índice del nodo que se va a abandonar.
+                // ...recordar el índice del entry que se va a abandonar.
                 last_entry = current_entry;
 
-                // buscar el siguiente bucket no vacío, que DEBE existir, ya
-                // que se hasNext() retornó true...
+                // buscar el siguiente entry que tenga estado 1.
                 current_entry++;
                 entry = (Entry) t[current_entry];
                 while(entry.getEstado()!=1)
@@ -1251,16 +1265,17 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 // avisar que next() fue invocado con éxito...
                 next_ok = true;
 
-                // y retornar la clave del elemento alcanzado...
+                // y retornar la clave del entry alcanzado...
                 return entry;
             }
 
-            /*
-             * Remueve el elemento actual de la tabla, dejando el iterador en la
-             * posición anterior al que fue removido. El elemento removido es el
-             * que fue retornado la última vez que se invocó a next(). El método
-             * sólo puede ser invocado una vez por cada invocación a next().
+
+            /**
+             * Metodo que remueve el elemento actual de la tabla, y mueve el iterador
+             * a a la posicion anterior al que fue removido. solo puedo invocar el metodo
+             * una vez por invocacion del next ().
              */
+
             @Override
             public void remove()
             {
@@ -1309,16 +1324,32 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
         {
             return new ValueCollectionIterator();
         }
+
+        /**
+         * Método que obtiene la cantidad de elementos contenidos en la vista (y por lo tanto en la tabla)
+         * @return la cantidad de elementos contenidos en la tabla.
+         */
         @Override
         public int size()
         {
             return TSBHashTableDA.this.count;
         }
+
+        /**
+         * Verifica si esta Vista (y la tabla) contienen el par que entra como parametro
+         * (de clase Entry)
+         * @return un valor booleano, true en caso de contener el par y false en caso
+         * de no contenerlo.
+         */
         @Override
         public boolean contains(Object o)
         {
             return TSBHashTableDA.this.containsValue(o);
         }
+
+        /**
+         * Método que limpia el interior de la tabla. No retorna nada
+         */
         @Override
         public void clear()
         {
@@ -1328,10 +1359,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
         private class ValueCollectionIterator implements Iterator<V>
         {
-            // índice de la lista actualmente recorrida...
+            // índice de la Entry actualmente recorrida...
             private int current_entry;
 
-            // índice de la lista anterior (si se requiere en remove())...
+            // índice de la Entry anterior (si se requiere en remove())...
             private int last_entry;
 
             // flag para controlar si remove() está bien invocado...
@@ -1340,8 +1371,8 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
             // el valor que debería tener el modCount de la tabla completa...
             private int expected_modCount;
 
-            /*
-             * Crea un iterador comenzando en la primera lista. Activa el
+            /**
+             * metodo que crea un iterador comenzando en la primera Entry. Activa el
              * mecanismo fail-fast.
              */
             public ValueCollectionIterator()
@@ -1352,9 +1383,9 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 expected_modCount = TSBHashTableDA.this.modCount;
             }
 
-            /*
-             * Determina si hay al menos un elemento en la tabla que no haya
-             * sido retornado por next().
+            /**
+             * Metodo que busca si hay un proxmima entry en la tabla con estado 1
+             * @return true si se encontro otra entry y false si no se encontro.
              */
             @Override
             public boolean hasNext()
@@ -1373,7 +1404,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 return false;
             }
 
-            /*
+            /**
              * Retorna el siguiente elemento disponible en la tabla.
              */
             @Override
@@ -1395,11 +1426,10 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
 
                 Entry entry;
 
-                // ...recordar el índice del nodo que se va a abandonar.
+                // ...recordar el índice del Entry que se va a abandonar.
                 last_entry = current_entry;
 
-                // buscar el siguiente bucket no vacío, que DEBE existir, ya
-                // que se hasNext() retornó true...
+                // buscar el siguiente entry con estado 1.
                 current_entry++;
                 entry = (Entry) t[current_entry];
                 while(entry.getEstado()!=1)
@@ -1416,7 +1446,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 return value;
             }
 
-            /*
+            /**
              * Remueve el elemento actual de la tabla, dejando el iterador en la
              * posición anterior al que fue removido. El elemento removido es el
              * que fue retornado la última vez que se invocó a next(). El método
@@ -1442,7 +1472,7 @@ public class TSBHashTableDA<K,V> implements Map<K,V>, Cloneable, Serializable
                 // avisar que el remove() válido para next() ya se activó...
                 next_ok = false;
 
-                // la tabla tiene un elementon menos...
+                // la tabla tiene un elemento menos...
                 TSBHashTableDA.this.count--;
 
                 // fail_fast iterator: todo en orden...
