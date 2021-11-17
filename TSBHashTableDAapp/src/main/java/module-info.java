@@ -5,4 +5,6 @@ module com.example.tsbhashtabledaapp {
 
     opens com.example.tsbhashtabledaapp to javafx.fxml;
     exports com.example.tsbhashtabledaapp;
+    exports soporte;
+    opens soporte to javafx.fxml;
 }

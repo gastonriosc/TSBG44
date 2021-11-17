@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="642.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="interfaz.CovidController">
+   <children>
+      <Label layoutX="41.0" layoutY="34.0" text="Archivo:">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Label>
+      <Button fx:id="btnSeleccionar" layoutX="41.0" layoutY="71.0" mnemonicParsing="false" onAction="#SeleccionarClick" text="Seleccionar">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Button>
+      <Label fx:id="lblNombreArchivo" layoutX="130.0" layoutY="34.0" prefHeight="27.0" prefWidth="426.0">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Label>
+      <Button fx:id="btnProcesar" layoutX="384.0" layoutY="71.0" mnemonicParsing="false" onAction="#ProcesarClick" text="Procesar Archivo">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Button>
+      <ComboBox fx:id="cmbDeptos" layoutX="189.0" layoutY="178.0" prefHeight="39.0" prefWidth="173.0" />
+      <Label layoutX="40.0" layoutY="184.0" text="Departamento:">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Label>
+      <Label layoutX="415.0" layoutY="184.0" text="Todos">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Label>
+      <CheckBox fx:id="chkTodos" layoutX="481.0" layoutY="184.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="25.0">
+         <font>
+            <Font size="19.0" />
+         </font>
+      </CheckBox>
+      <ComboBox fx:id="cmbCriterios" layoutX="190.0" layoutY="224.0" prefHeight="39.0" prefWidth="173.0" />
+      <Label layoutX="102.0" layoutY="230.0" text="Criterio:">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Label>
+      <TableView fx:id="tableDatos" layoutX="40.0" layoutY="338.0" prefHeight="210.0" prefWidth="519.0">
+        <columns>
+          <TableColumn prefWidth="260.0" text="Criterio" />
+          <TableColumn prefWidth="258.0" text="Cantidad" />
+        </columns>
+      </TableView>
+      <Button fx:id="btnSalir" layoutX="494.0" layoutY="572.0" mnemonicParsing="false" onAction="#SalirClick" text="Salir">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Button>
+      <Label fx:id="lblSituacion" alignment="CENTER" layoutX="52.0" layoutY="132.0" prefHeight="27.0" prefWidth="497.0">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Label>
+      <Button fx:id="btnConsultar" layoutX="445.0" layoutY="280.0" mnemonicParsing="false" onAction="#ConsultarClick" prefHeight="41.0" prefWidth="113.0" text="Consultar">
+         <font>
+            <Font name="Manjari Regular" size="19.0" />
+         </font>
+      </Button>
+   </children>
+</Pane>

@@ -1,4 +1,4 @@
-package com.example.tsbhashtabledaapp;
+package interfaz;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -7,12 +7,12 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class RegistroApplication extends Application {
+public class CovidApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(RegistroApplication.class.getResource("hello-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 600, 460);
-        stage.setTitle("Informe Conteo de Registros");
+        FXMLLoader fxmlLoader = new FXMLLoader(CovidApplication.class.getResource("Covid-view.fxml"));
+        Scene scene = new Scene(fxmlLoader.load(), 600, 650);
+        stage.setTitle("Reporte vacunas COVID-19");
         stage.setScene(scene);
         stage.show();
     }
